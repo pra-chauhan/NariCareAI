@@ -1,0 +1,208 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Nunito:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 30 60% 97%;
+    --foreground: 10 10% 27%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 10 10% 27%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 10 10% 27%;
+
+    --primary: 330 60% 77%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 300 15% 71%;
+    --secondary-foreground: 10 10% 27%;
+
+    --muted: 30 30% 94%;
+    --muted-foreground: 10 5% 50%;
+
+    --accent: 43 76% 52%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 330 20% 90%;
+    --input: 330 20% 90%;
+    --ring: 330 60% 77%;
+
+    --radius: 1rem;
+
+    /* Custom tokens */
+    --sage: 145 25% 74%;
+    --sage-foreground: 145 30% 25%;
+    --peach: 28 76% 83%;
+    --peach-foreground: 28 40% 30%;
+    --rose-gradient: linear-gradient(135deg, hsl(330 60% 77%), hsl(300 15% 71%));
+    --gold-gradient: linear-gradient(135deg, hsl(43 76% 52%), hsl(43 90% 65%));
+    --glass-bg: rgba(255, 255, 255, 0.4);
+    --glass-border: rgba(255, 255, 255, 0.6);
+    --glass-shadow: 0 8px 32px rgba(232, 160, 191, 0.15);
+    --glass-blur: 20px;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Nunito', sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+  }
+}
+
+@layer components {
+  .glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+    border-radius: var(--radius);
+  }
+
+  .glass-card-hover {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .glass-card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(232, 160, 191, 0.25);
+  }
+
+  .gradient-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .orb-rose {
+    background: hsl(330 60% 77%);
+    width: 400px;
+    height: 400px;
+  }
+  .orb-peach {
+    background: hsl(28 76% 83%);
+    width: 350px;
+    height: 350px;
+  }
+  .orb-sage {
+    background: hsl(145 25% 74%);
+    width: 300px;
+    height: 300px;
+  }
+
+  .progress-bar-3d {
+    background: hsl(var(--muted));
+    border-radius: 999px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+  }
+  .progress-bar-3d .fill {
+    border-radius: 999px;
+    position: relative;
+    overflow: hidden;
+  }
+  .progress-bar-3d .fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
+    border-radius: 999px 999px 0 0;
+  }
+
+  .orb-stat {
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    box-shadow: 
+      0 4px 15px rgba(0,0,0,0.1),
+      inset 0 -4px 8px rgba(0,0,0,0.05),
+      inset 0 4px 8px rgba(255,255,255,0.4);
+  }
+
+  .pill-badge {
+    border-radius: 999px;
+    padding: 4px 14px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    box-shadow: 
+      0 2px 4px rgba(0,0,0,0.1),
+      inset 0 1px 2px rgba(255,255,255,0.5);
+    transition: transform 0.15s ease;
+  }
+  .pill-badge:active {
+    transform: scale(0.95);
+  }
+
+  .soft-input {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    transition: box-shadow 0.2s ease;
+  }
+  .soft-input:focus {
+    box-shadow: 0 0 0 3px hsl(270 40% 80% / 0.3);
+    outline: none;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+  .shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 2s infinite;
+  }
+
+  @keyframes petal-fall {
+    0% { transform: translateY(-10px) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.6; }
+    90% { opacity: 0.6; }
+    100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+  }
+  .petal {
+    position: fixed;
+    pointer-events: none;
+    z-index: 0;
+    animation: petal-fall linear infinite;
+    opacity: 0;
+  }
+}
