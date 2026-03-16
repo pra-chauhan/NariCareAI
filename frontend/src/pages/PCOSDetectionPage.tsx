@@ -3,13 +3,14 @@ import { motion } from "framer-motion";
 import GlassCard from "@/components/ui/GlassCard";
 import ProgressBar3D from "@/components/ui/ProgressBar3D";
 import { Button } from "@/components/ui/button";
-import { predictPCOS } from "@/lib/api";
-import { getProfile, saveProfile } from "@/lib/store";
+import { predictBasic, predictAdvanced } from "@/lib/api";
+import { getProfile } from "@/lib/store";
 import { Microscope, AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const featureCategories: any = {
 
-  "Demographics": [
+  Demographics: [
     "Age (yrs)",
     "Weight (Kg)",
     "Height(Cm)",
@@ -54,14 +55,21 @@ const featureCategories: any = {
 const PCOSDetectionPage = () => {
 
   const profile = getProfile()!;
+  const navigate = useNavigate();
+
+  const [mode, setMode] = useState("basic");
   const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+
   const [form, setForm] = useState<any>({
     "Age (yrs)": 22,
-    "Weight (Kg)": profile.weight || 60,
-    "Height(Cm)": profile.height || 160,
-    "BMI": profile.weight / ((profile.height / 100) ** 2),
-    "Marraige Status (Yrs)": 0,
+    "Weight (Kg)": profile?.weight || 60,
+    "Height(Cm)": profile?.height || 160,
+    "BMI": profile?.weight && profile?.height
+      ? profile.weight / ((profile.height / 100) ** 2)
+      : 22,
 
+    "Marraige Status (Yrs)": 0,
     "Pulse rate(bpm)": 72,
 
     "Hb(g/dl)": 12,
@@ -91,8 +99,6 @@ const PCOSDetectionPage = () => {
     "Reg.Exercise(Y/N)": 0
   });
 
-  const [result, setResult] = useState<any>(null);
-
   const updateValue = (key: string, value: any) => {
     setForm((prev: any) => ({
       ...prev,
@@ -102,52 +108,76 @@ const PCOSDetectionPage = () => {
 
   const handleDetect = async () => {
 
-  try {
+    try {
 
-    setLoading(true);
+      setLoading(true);
 
-    const payload = {
-      ...form,
-      "Cycle(R/I)": form["Cycle(R/I)"] === "R" ? 0 : 1
-    };
+      let response;
 
-    const response = await predictPCOS(payload);
+      if (mode === "basic") {
 
-    const probability = Math.round(response.pcos_probability * 100);
+        const basicPayload = {
+          "Age (yrs)": form["Age (yrs)"],
+          "BMI": form["BMI"],
+          "Cycle(R/I)": form["Cycle(R/I)"] === "R" ? 0 : 1,
+          "Weight gain(Y/N)": form["Weight gain(Y/N)"],
+          "hair growth(Y/N)": form["hair growth(Y/N)"],
+          "Pimples(Y/N)": form["Pimples(Y/N)"],
+          "Fast food (Y/N)": form["Fast food (Y/N)"],
+          "Reg.Exercise(Y/N)": form["Reg.Exercise(Y/N)"]
+        };
 
-    let risk = "low";
-    if (probability > 70) risk = "high";
-    else if (probability > 40) risk = "medium";
+        response = await predictBasic(basicPayload);
 
-    const resultData = {
-      risk,
-      probability,
-      recommendations: [
-        "Maintain a balanced diet",
-        "Exercise regularly",
-        "Consult a gynecologist",
-        "Track menstrual cycles"
-      ]
-    };
+      } else {
 
-    setResult(resultData);
+        const advancedPayload = {
+          ...form,
+          "Cycle(R/I)": form["Cycle(R/I)"] === "R" ? 0 : 1
+        };
 
-  } catch (err) {
+        response = await predictAdvanced(advancedPayload);
 
-    console.error("Prediction error", err);
+      }
 
-  } finally {
+      const probability = Math.round(response.pcos_probability * 100);
 
-    setLoading(false);
+      let risk = "low";
+      if (probability > 70) risk = "high";
+      else if (probability > 40) risk = "medium";
 
-  }
+      const resultData = {
+        risk,
+        probability,
+        recommendations: [
+          "Maintain a balanced diet",
+          "Exercise regularly",
+          "Consult a gynecologist",
+          "Track menstrual cycles"
+        ]
+      };
 
-};
+      setResult(resultData);
 
-  const inputClass =
-    "soft-input w-full px-3 py-2 text-sm border rounded";
+      navigate("/health-dashboard", {
+        state: { risk, probability, form }
+      });
 
-  const riskColors = {
+    } catch (err) {
+
+      console.error("Prediction error", err);
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
+
+  const inputClass = "soft-input w-full px-3 py-2 text-sm border rounded";
+
+  const riskColors: any = {
     low: "bg-sage",
     medium: "bg-accent",
     high: "bg-destructive"
@@ -163,78 +193,83 @@ const PCOSDetectionPage = () => {
         </h1>
       </motion.div>
 
-      {Object.entries(featureCategories).map(([category, features]) => (
+      <div className="flex gap-3 mb-4">
 
-        <GlassCard key={category}>
+        <Button
+          variant={mode === "basic" ? "default" : "outline"}
+          onClick={() => setMode("basic")}
+        >
+          Basic Screening
+        </Button>
 
-          <h3 className="text-lg mb-3">{category}</h3>
+        <Button
+          variant={mode === "advanced" ? "default" : "outline"}
+          onClick={() => setMode("advanced")}
+        >
+          Advanced Screening
+        </Button>
+
+      </div>
+
+      {/* BASIC SCREENING */}
+
+      {mode === "basic" && (
+
+        <GlassCard>
+
+          <h3 className="text-lg mb-3">Early PCOS Screening</h3>
 
           <div className="grid grid-cols-2 gap-3">
 
-            {(features as string[]).map((feature) => {
+            <input
+              type="number"
+              className={inputClass}
+              value={form["Age (yrs)"]}
+              onChange={(e)=>updateValue("Age (yrs)", Number(e.target.value))}
+              placeholder="Age"
+            />
 
-              const isBinary = feature.includes("(Y/N)");
-              const isCycle = feature === "Cycle(R/I)";
+            <input
+              type="number"
+              className={inputClass}
+              value={form["BMI"]}
+              onChange={(e)=>updateValue("BMI", Number(e.target.value))}
+              placeholder="BMI"
+            />
 
-              if (isBinary) {
+            <select
+              className={inputClass}
+              value={form["Cycle(R/I)"]}
+              onChange={(e)=>updateValue("Cycle(R/I)", e.target.value)}
+            >
+              <option value="R">Regular</option>
+              <option value="I">Irregular</option>
+            </select>
 
-  const isSelected = form[feature] === 1;
+            {[
+              "Weight gain(Y/N)",
+              "hair growth(Y/N)",
+              "Pimples(Y/N)",
+              "Fast food (Y/N)",
+              "Reg.Exercise(Y/N)"
+            ].map((feature)=>{
 
-  return (
+              const active = form[feature] === 1;
 
-    <div
-      key={feature}
-      onClick={() => updateValue(feature, isSelected ? 0 : 1)}
-      className={`cursor-pointer px-3 py-2 rounded border text-sm transition
-        ${isSelected
-          ? "bg-pink-200 text-pink-700 border-pink-300"
-          : "bg-cream text-muted-foreground border-muted hover:bg-cream/80"
-        }`}
-    >
-      {feature.replace("(Y/N)", "")}
-    </div>
+              return(
 
-  );
-}
-
-              if (isCycle) {
-
-                return (
-                  <div key={feature}>
-                    <label className="text-sm">{feature}</label>
-
-                    <select
-                      className={inputClass}
-                      value={form[feature] || "R"}
-                      onChange={(e) =>
-                        updateValue(feature, e.target.value)
-                      }
-                    >
-                      <option value="R">Regular</option>
-                      <option value="I">Irregular</option>
-                    </select>
-
-                  </div>
-                );
-              }
-
-              return (
-
-                <div key={feature}>
-                  <label className="text-sm">{feature}</label>
-
-                  <input
-                    type="number"
-                    className={inputClass}
-                    value={form[feature] || 0}
-                    onChange={(e) =>
-                      updateValue(feature, Number(e.target.value))
-                    }
-                  />
-
+                <div
+                  key={feature}
+                  onClick={()=>updateValue(feature, active ? 0 : 1)}
+                  className={`cursor-pointer px-3 py-2 rounded border text-sm
+                  ${active
+                    ? "bg-pink-200 border-pink-300"
+                    : "bg-cream border-muted"}`}
+                >
+                  {feature.replace("(Y/N)","")}
                 </div>
 
-              );
+              )
 
             })}
 
@@ -242,11 +277,88 @@ const PCOSDetectionPage = () => {
 
         </GlassCard>
 
-      ))}
+      )}
+
+      {/* ADVANCED SCREENING */}
+
+      {mode === "advanced" &&
+
+        Object.entries(featureCategories).map(([category, features]) => (
+
+          <GlassCard key={category}>
+
+            <h3 className="text-lg mb-3">{category}</h3>
+
+            <div className="grid grid-cols-2 gap-3">
+
+              {(features as string[]).map((feature)=>{
+
+                const isBinary = feature.includes("(Y/N)");
+                const isCycle = feature === "Cycle(R/I)";
+
+                if (isBinary){
+
+                  const active = form[feature] === 1;
+
+                  return(
+
+                    <div
+                      key={feature}
+                      onClick={()=>updateValue(feature, active ? 0 : 1)}
+                      className={`cursor-pointer px-3 py-2 rounded border
+                      ${active ? "bg-pink-200 border-pink-300" : "bg-cream border-muted"}`}
+                    >
+                      {feature.replace("(Y/N)","")}
+                    </div>
+
+                  )
+
+                }
+
+                if (isCycle){
+
+                  return(
+
+                    <select
+                      key={feature}
+                      className={inputClass}
+                      value={form[feature]}
+                      onChange={(e)=>updateValue(feature,e.target.value)}
+                    >
+                      <option value="R">Regular</option>
+                      <option value="I">Irregular</option>
+                    </select>
+
+                  )
+
+                }
+
+                return(
+
+                  <input
+                    key={feature}
+                    type="number"
+                    className={inputClass}
+                    value={form[feature] || 0}
+                    onChange={(e)=>updateValue(feature,Number(e.target.value))}
+                    placeholder={feature}
+                  />
+
+                )
+
+              })}
+
+            </div>
+
+          </GlassCard>
+
+        ))
+
+      }
 
       <Button className="w-full" onClick={handleDetect} disabled={loading}>
-  {loading ? "Analyzing..." : "Run PCOS Analysis"}
-</Button>
+        {loading ? "Analyzing..." : "Run PCOS Analysis"}
+      </Button>
 
       {result && (
 
@@ -255,8 +367,8 @@ const PCOSDetectionPage = () => {
           <div className="flex items-center gap-3">
 
             {result.risk === "low"
-              ? <CheckCircle2 />
-              : <AlertTriangle />
+              ? <CheckCircle2/>
+              : <AlertTriangle/>
             }
 
             <h3 className="text-xl">
@@ -275,10 +387,10 @@ const PCOSDetectionPage = () => {
           <div>
 
             <h4 className="flex items-center gap-1">
-              <Info size={14} /> Recommendations
+              <Info size={14}/> Recommendations
             </h4>
 
-            {result.recommendations.map((r: string, i: number) => (
+            {result.recommendations.map((r:string,i:number)=>(
               <p key={i}>• {r}</p>
             ))}
 
