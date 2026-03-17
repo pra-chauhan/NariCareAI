@@ -8,6 +8,42 @@ import { getProfile } from "@/lib/store";
 import { Microscope, AlertTriangle, CheckCircle2, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+/* ---------------- FIELD DESCRIPTIONS ---------------- */
+
+const fieldInfo: any = {
+  "Age (yrs)": "Your age in years (example: 22)",
+  "BMI": "Body Mass Index (auto calculated or enter manually)",
+  "Cycle(R/I)": "Menstrual cycle pattern (Regular or Irregular)",
+  "Weight gain(Y/N)": "Have you experienced sudden weight gain recently?",
+  "hair growth(Y/N)": "Unwanted facial/body hair growth",
+  "Pimples(Y/N)": "Frequent acne or pimples",
+  "Fast food (Y/N)": "Do you frequently eat fast food?",
+  "Reg.Exercise(Y/N)": "Do you exercise regularly?",
+
+  "Weight (Kg)": "Your weight in kilograms",
+  "Height(Cm)": "Your height in centimeters",
+  "Marraige Status (Yrs)": "Years since marriage (0 if unmarried)",
+  "Pulse rate(bpm)": "Heart rate per minute",
+
+  "Hb(g/dl)": "Hemoglobin level (blood test)",
+  "AMH(ng/mL)": "Anti-Mullerian Hormone level",
+  "Vit D3 (ng/mL)": "Vitamin D3 blood level",
+
+  "Cycle length(days)": "Average menstrual cycle length",
+  "Hip(inch)": "Hip circumference",
+  "Waist(inch)": "Waist circumference",
+
+  "Follicle No. (L)": "Number of follicles in left ovary",
+  "Follicle No. (R)": "Number of follicles in right ovary",
+
+  "Avg. F size (L) (mm)": "Average follicle size in left ovary",
+  "Avg. F size (R) (mm)": "Average follicle size in right ovary",
+
+  "Endometrium (mm)": "Thickness of uterus lining"
+};
+
+/* ---------------- ADVANCED CATEGORIES ---------------- */
+
 const featureCategories: any = {
 
   Demographics: [
@@ -49,8 +85,9 @@ const featureCategories: any = {
     "Fast food (Y/N)",
     "Reg.Exercise(Y/N)"
   ]
-
 };
+
+/* ---------------- COMPONENT ---------------- */
 
 const PCOSDetectionPage = () => {
 
@@ -65,9 +102,7 @@ const PCOSDetectionPage = () => {
     "Age (yrs)": 22,
     "Weight (Kg)": profile?.weight || 60,
     "Height(Cm)": profile?.height || 160,
-    "BMI": profile?.weight && profile?.height
-      ? profile.weight / ((profile.height / 100) ** 2)
-      : 22,
+    "BMI": 22,
 
     "Marraige Status (Yrs)": 0,
     "Pulse rate(bpm)": 72,
@@ -105,6 +140,8 @@ const PCOSDetectionPage = () => {
       [key]: value
     }));
   };
+
+  /* ---------------- DETECTION ---------------- */
 
   const handleDetect = async () => {
 
@@ -150,10 +187,10 @@ const PCOSDetectionPage = () => {
         risk,
         probability,
         recommendations: [
-          "Maintain a balanced diet",
+          "Maintain balanced diet",
           "Exercise regularly",
-          "Consult a gynecologist",
-          "Track menstrual cycles"
+          "Track menstrual cycle",
+          "Consult gynecologist if symptoms persist"
         ]
       };
 
@@ -177,11 +214,7 @@ const PCOSDetectionPage = () => {
 
   const inputClass = "soft-input w-full px-3 py-2 text-sm border rounded";
 
-  const riskColors: any = {
-    low: "bg-sage",
-    medium: "bg-accent",
-    high: "bg-destructive"
-  };
+  /* ---------------- UI ---------------- */
 
   return (
 
@@ -189,11 +222,16 @@ const PCOSDetectionPage = () => {
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <h1 className="text-2xl flex items-center gap-2">
-          <Microscope /> PCOS Detection
+          <Microscope/> PCOS Detection
         </h1>
+        <p className="text-sm text-muted-foreground">
+          Enter your health details below to check PCOS risk.
+        </p>
       </motion.div>
 
-      <div className="flex gap-3 mb-4">
+      {/* MODE SWITCH */}
+
+      <div className="flex gap-3">
 
         <Button
           variant={mode === "basic" ? "default" : "outline"}
@@ -211,40 +249,62 @@ const PCOSDetectionPage = () => {
 
       </div>
 
-      {/* BASIC SCREENING */}
+      {/* BASIC MODE */}
 
       {mode === "basic" && (
 
         <GlassCard>
 
-          <h3 className="text-lg mb-3">Early PCOS Screening</h3>
+          <h3 className="text-lg mb-4">Early PCOS Screening</h3>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
 
-            <input
-              type="number"
-              className={inputClass}
-              value={form["Age (yrs)"]}
-              onChange={(e)=>updateValue("Age (yrs)", Number(e.target.value))}
-              placeholder="Age"
-            />
+            {["Age (yrs)", "BMI"].map((field)=>(
 
-            <input
-              type="number"
-              className={inputClass}
-              value={form["BMI"]}
-              onChange={(e)=>updateValue("BMI", Number(e.target.value))}
-              placeholder="BMI"
-            />
+              <div key={field}>
+                <label className="text-sm font-medium flex items-center gap-1">
+                  {field}
+                  <Info size={14}/>
+                </label>
 
-            <select
-              className={inputClass}
-              value={form["Cycle(R/I)"]}
-              onChange={(e)=>updateValue("Cycle(R/I)", e.target.value)}
-            >
-              <option value="R">Regular</option>
-              <option value="I">Irregular</option>
-            </select>
+                <p className="text-xs text-muted-foreground mb-1">
+                  {fieldInfo[field]}
+                </p>
+
+                <input
+                  type="number"
+                  className={inputClass}
+                  value={form[field]}
+                  onChange={(e)=>updateValue(field,Number(e.target.value))}
+                />
+              </div>
+
+            ))}
+
+            <div>
+
+              <label className="text-sm font-medium">Cycle Type</label>
+
+              <p className="text-xs text-muted-foreground mb-1">
+                {fieldInfo["Cycle(R/I)"]}
+              </p>
+
+              <select
+                className={inputClass}
+                value={form["Cycle(R/I)"]}
+                onChange={(e)=>updateValue("Cycle(R/I)",e.target.value)}
+              >
+                <option value="R">Regular</option>
+                <option value="I">Irregular</option>
+              </select>
+
+            </div>
+
+          </div>
+
+          {/* BASIC SYMPTOMS */}
+
+          <div className="grid grid-cols-2 gap-3 mt-6">
 
             {[
               "Weight gain(Y/N)",
@@ -261,7 +321,7 @@ const PCOSDetectionPage = () => {
                 <div
                   key={feature}
                   onClick={()=>updateValue(feature, active ? 0 : 1)}
-                  className={`cursor-pointer px-3 py-2 rounded border text-sm
+                  className={`cursor-pointer px-3 py-3 rounded border text-sm
                   ${active
                     ? "bg-pink-200 border-pink-300"
                     : "bg-cream border-muted"}`}
@@ -279,24 +339,24 @@ const PCOSDetectionPage = () => {
 
       )}
 
-      {/* ADVANCED SCREENING */}
+      {/* ADVANCED MODE stays SAME */}
 
       {mode === "advanced" &&
-
         Object.entries(featureCategories).map(([category, features]) => (
 
           <GlassCard key={category}>
 
-            <h3 className="text-lg mb-3">{category}</h3>
+            <h3 className="text-lg mb-4">{category}</h3>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
 
               {(features as string[]).map((feature)=>{
 
                 const isBinary = feature.includes("(Y/N)");
                 const isCycle = feature === "Cycle(R/I)";
+                const isLifestyle = category === "Symptoms & Lifestyle";
 
-                if (isBinary){
+                if(isBinary && isLifestyle){
 
                   const active = form[feature] === 1;
 
@@ -305,8 +365,10 @@ const PCOSDetectionPage = () => {
                     <div
                       key={feature}
                       onClick={()=>updateValue(feature, active ? 0 : 1)}
-                      className={`cursor-pointer px-3 py-2 rounded border
-                      ${active ? "bg-pink-200 border-pink-300" : "bg-cream border-muted"}`}
+                      className={`cursor-pointer px-3 py-3 rounded border text-sm
+                      ${active
+                        ? "bg-pink-200 border-pink-300"
+                        : "bg-cream border-muted"}`}
                     >
                       {feature.replace("(Y/N)","")}
                     </div>
@@ -315,34 +377,42 @@ const PCOSDetectionPage = () => {
 
                 }
 
-                if (isCycle){
-
-                  return(
-
-                    <select
-                      key={feature}
-                      className={inputClass}
-                      value={form[feature]}
-                      onChange={(e)=>updateValue(feature,e.target.value)}
-                    >
-                      <option value="R">Regular</option>
-                      <option value="I">Irregular</option>
-                    </select>
-
-                  )
-
-                }
-
                 return(
 
-                  <input
-                    key={feature}
-                    type="number"
-                    className={inputClass}
-                    value={form[feature] || 0}
-                    onChange={(e)=>updateValue(feature,Number(e.target.value))}
-                    placeholder={feature}
-                  />
+                  <div key={feature}>
+
+                    <label className="text-sm font-medium flex items-center gap-1">
+                      {feature.replace("(Y/N)","")}
+                      <Info size={14}/>
+                    </label>
+
+                    <p className="text-xs text-muted-foreground mb-1">
+                      {fieldInfo[feature]}
+                    </p>
+
+                    {isCycle ? (
+
+                      <select
+                        className={inputClass}
+                        value={form[feature]}
+                        onChange={(e)=>updateValue(feature,e.target.value)}
+                      >
+                        <option value="R">Regular</option>
+                        <option value="I">Irregular</option>
+                      </select>
+
+                    ) : (
+
+                      <input
+                        type="number"
+                        className={inputClass}
+                        value={form[feature]}
+                        onChange={(e)=>updateValue(feature,Number(e.target.value))}
+                      />
+
+                    )}
+
+                  </div>
 
                 )
 
@@ -353,7 +423,6 @@ const PCOSDetectionPage = () => {
           </GlassCard>
 
         ))
-
       }
 
       <Button className="w-full" onClick={handleDetect} disabled={loading}>
@@ -380,21 +449,8 @@ const PCOSDetectionPage = () => {
           <ProgressBar3D
             value={result.probability}
             max={100}
-            color={riskColors[result.risk]}
             label={`${result.probability}% probability`}
           />
-
-          <div>
-
-            <h4 className="flex items-center gap-1">
-              <Info size={14}/> Recommendations
-            </h4>
-
-            {result.recommendations.map((r:string,i:number)=>(
-              <p key={i}>• {r}</p>
-            ))}
-
-          </div>
 
         </GlassCard>
 

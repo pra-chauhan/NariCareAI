@@ -10,7 +10,7 @@ const TABS = ['Asanas', 'Pranayam', 'Stress Relief', 'Desk Stretch', 'Timer'];
 
 const YogaPage = () => {
   const [tab, setTab] = useState(0);
-  const [timerSeconds, setTimerSeconds] = useState(300); // 5 min default
+  const [timerSeconds, setTimerSeconds] = useState(300); 
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerPreset, setTimerPreset] = useState(300);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
@@ -51,7 +51,7 @@ const YogaPage = () => {
         ))}
       </div>
 
-      {/* Asanas */}
+     
       {tab === 0 && (
         <div className="space-y-3">
           <p className="text-sm font-body text-muted-foreground">6 key PCOS-healing asanas</p>
@@ -73,7 +73,7 @@ const YogaPage = () => {
         </div>
       )}
 
-      {/* Pranayam */}
+     
       {tab === 1 && (
         <div className="space-y-3">
           <p className="text-sm font-body text-muted-foreground">4 breathing techniques for hormonal balance</p>
@@ -95,7 +95,7 @@ const YogaPage = () => {
         </div>
       )}
 
-      {/* Stress Relief */}
+    
       {tab === 2 && (
         <div className="space-y-3">
           <p className="text-sm font-body text-muted-foreground">Calming poses for stress management</p>
@@ -109,7 +109,7 @@ const YogaPage = () => {
         </div>
       )}
 
-      {/* Desk Stretch */}
+      
       {tab === 3 && (
         <div className="space-y-3">
           <GlassCard className="border-l-4 border-accent">
@@ -132,7 +132,7 @@ const YogaPage = () => {
         </div>
       )}
 
-      {/* Timer */}
+     
       {tab === 4 && (
         <div className="space-y-4">
           <GlassCard className="text-center py-8">
@@ -154,7 +154,7 @@ const YogaPage = () => {
                 </button>
               ))}
             </div>
-            {/* Progress ring */}
+           
             <div className="relative w-32 h-32 mx-auto mb-4">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="45" fill="none" stroke="hsl(var(--muted))" strokeWidth="4" />

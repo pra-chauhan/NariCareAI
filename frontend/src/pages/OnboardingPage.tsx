@@ -55,7 +55,7 @@ const OnboardingPage = () => {
         >
           <div className="inline-flex items-center gap-2 mb-2">
             <Flower2 className="text-primary" size={32} />
-            <h1 className="text-3xl font-display text-foreground">Aura</h1>
+            <h1 className="text-3xl font-display text-foreground">NariCareAI</h1>
           </div>
           <p className="text-sm font-body text-muted-foreground">Your Wellness Companion</p>
         </motion.div>
