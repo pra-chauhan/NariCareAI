@@ -41,6 +41,30 @@ const fieldInfo: any = {
 
   "Endometrium (mm)": "Thickness of uterus lining"
 };
+/* ---------------- HUMAN EXPLANATION MAP ---------------- */
+
+const explanationMap: any = {
+  "Cycle(R/I)": "Irregular menstrual cycles",
+  "BMI": "Higher body weight",
+  "Weight gain(Y/N)": "Recent weight gain",
+  "hair growth(Y/N)": "Excess hair growth",
+  "Pimples(Y/N)": "Frequent acne",
+  "Fast food (Y/N)": "Frequent fast food consumption",
+  "Reg.Exercise(Y/N)": "Lack of regular exercise"
+};
+
+/* ---------------- SMART RECOMMENDATIONS ---------------- */
+
+const recommendationMap: any = {
+  "BMI": "Focus on weight management with balanced diet and exercise",
+  "Cycle(R/I)": "Track your menstrual cycle regularly",
+  "Weight gain(Y/N)": "Monitor diet and reduce sugar intake",
+  "Fast food (Y/N)": "Reduce processed and fast food consumption",
+  "Reg.Exercise(Y/N)": "Start light daily exercise like walking or yoga",
+  "hair growth(Y/N)": "Consult doctor for hormonal imbalance",
+  "Pimples(Y/N)": "Maintain skincare and balanced diet"
+};
+
 
 /* ---------------- ADVANCED CATEGORIES ---------------- */
 
@@ -92,7 +116,7 @@ const featureCategories: any = {
 const PCOSDetectionPage = () => {
 
   const profile = getProfile()!;
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
 
   const [mode, setMode] = useState("basic");
   const [loading, setLoading] = useState(false);
@@ -176,6 +200,7 @@ const PCOSDetectionPage = () => {
         response = await predictAdvanced(advancedPayload);
 
       }
+      console.log("FULL RESPONSE:", response);
 
       const probability = Math.round(response.pcos_probability * 100);
 
@@ -183,22 +208,38 @@ const PCOSDetectionPage = () => {
       if (probability > 70) risk = "high";
       else if (probability > 40) risk = "medium";
 
+      const lifestyleScore = 100 - probability;
+      const stressScore = Math.min(100, Math.round(probability * 0.8));
+
+      
+      // Extracting the Shap based recommndtion here. 
+
+
+      const dynamicRecommendations = (response.top_factors || [])
+        .map((f: any) => recommendationMap[f.feature])
+        .filter(Boolean);
+
       const resultData = {
         risk,
         probability,
+        lifestyleScore,
+        stressScore,
+        factors: response.top_factors || [],
         recommendations: [
-          "Maintain balanced diet",
-          "Exercise regularly",
-          "Track menstrual cycle",
-          "Consult gynecologist if symptoms persist"
+          ...new Set([
+            ...dynamicRecommendations,
+            "Maintain balanced diet",
+            "Exercise regularly",
+            "Track menstrual cycle"
+          ])
         ]
       };
 
       setResult(resultData);
 
-      navigate("/health-dashboard", {
-        state: { risk, probability, form }
-      });
+      // navigate("/health-dashboard", {
+      //   state: { risk, probability, form }
+      // });
 
     } catch (err) {
 
@@ -431,30 +472,114 @@ const PCOSDetectionPage = () => {
 
       {result && (
 
-        <GlassCard className="space-y-4">
+  <GlassCard className="space-y-4">
 
-          <div className="flex items-center gap-3">
+    {/* 🔥 RISK */}
+    <div className="flex items-center gap-3">
+      {result.risk === "low" ? <CheckCircle2/> : <AlertTriangle/>}
+      <h3 className="text-xl">{result.risk.toUpperCase()} RISK</h3>
+    </div>
 
-            {result.risk === "low"
-              ? <CheckCircle2/>
-              : <AlertTriangle/>
-            }
+    <ProgressBar3D
+      value={result.probability}
+      max={100}
+      label={`${result.probability}% probability`}
+    />
 
-            <h3 className="text-xl">
-              {result.risk.toUpperCase()} RISK
-            </h3>
+    {/* 🔥 SCORES */}
+    <div className="grid grid-cols-2 gap-4">
+      <div className="p-3 bg-cream rounded text-sm">
+        <p className="font-semibold">Lifestyle Score</p>
+        <p>{result.lifestyleScore  ?? 0}/100</p>
+      </div>
+
+      <div className="p-3 bg-cream rounded text-sm">
+        <p className="font-semibold">Stress Score</p>
+        <p>{result.stressScore ?? 0}/100</p>
+      </div>
+    </div>
+    {/* 🔥 AI INSIGHT */}
+
+{result.factors.length > 0 && (
+  <div className="p-3 rounded bg-blue-50 text-sm">
+
+    <strong>Key Insight:</strong>{" "}
+
+    Your highest risk is driven by{" "}
+    {result.factors.slice(0,2).map((f:any, i:number) => (
+      <span key={i}>
+        {explanationMap[f.feature] || f.feature}
+        {i === 0 && result.factors.length > 1 ? " and " : ""}
+      </span>
+    ))}.
+
+  </div>
+)}
+
+    {/* 🔥 SHAP SECTION */}
+    <div className="mt-4">
+      <h4 className="font-semibold flex items-center gap-2">
+        <Info size={16}/> Why this result?
+      </h4>
+
+      {/* 🔥 XAI GRAPH SECTION */}
+
+{result.factors.length > 0 && (
+  <div className="space-y-4 mt-4">
+
+    <h4 className="font-semibold flex items-center gap-2">
+      <Info size={16}/> AI Explanation
+    </h4>
+
+    {result.factors.map((f: any, i: number) => {
+
+      const isPositive = f.impact > 0;
+      const width = Math.min(Math.abs(f.impact) * 100, 100); // normalize
+
+      return (
+        <div key={i} className="space-y-1">
+
+          {/* Label */}
+          <div className="flex justify-between text-sm">
+            <span>
+              {explanationMap[f.feature] || f.feature}
+            </span>
+            <span className={isPositive ? "text-red-500" : "text-green-600"}>
+              {isPositive ? "↑ Risk" : "↓ Safe"}
+            </span>
+          </div>
+
+          {/* Bar */}
+          <div className="w-full h-3 bg-gray-200 rounded">
+
+            <div
+              className={`h-3 rounded transition-all duration-500
+              ${isPositive ? "bg-red-400" : "bg-green-400"}`}
+              style={{ width: `${width}%` }}
+            />
 
           </div>
 
-          <ProgressBar3D
-            value={result.probability}
-            max={100}
-            label={`${result.probability}% probability`}
-          />
+        </div>
+      );
+    })}
+  </div>
+)}
+    </div>
 
-        </GlassCard>
+    {/* 🔥 RECOMMENDATIONS */}
+    <div className="mt-4">
+      <h4 className="font-semibold mb-2">Suggestions</h4>
+      <ul className="list-disc ml-5 text-sm space-y-1">
+        {result.recommendations.map((rec: string, i: number) => (
+          <li key={i}>{rec}</li>
+        ))}
+      </ul>
+    </div>
 
-      )}
+  </GlassCard>
+
+)}
 
     </div>
 
