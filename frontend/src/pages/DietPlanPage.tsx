@@ -6,8 +6,9 @@ import { getProfile, calculateBMR, calculateTDEE, calculateBMI } from '@/lib/sto
 import { PCOS_MEAL_PLAN, REGULAR_MEAL_PLAN, AVOID_LIST_PCOS, SUPERFOODS_PCOS, DEFICIENCY_CHECKS } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Salad, AlertCircle, Sparkles, ShoppingCart, Stethoscope } from 'lucide-react';
+import { generateDiet } from '@/lib/api';
 
-const TABS = ['Today', 'Calculator', 'Avoid & Super', 'Grocery', 'Deficiency'];
+const TABS = ['Generate AI Diet', 'Calculator', 'Avoid & Super', 'Grocery', 'Deficiency'];
 
 const DietPlanPage = () => {
   const profile = getProfile()!;
@@ -22,6 +23,67 @@ const DietPlanPage = () => {
 
   const mealPlan = profile.hasPCOS ? PCOS_MEAL_PLAN : REGULAR_MEAL_PLAN;
   const dayIndex = new Date().getDate() % 3;
+
+  const [aiDiet, setAiDiet] = useState<any>(null);
+  const [loadingDiet, setLoadingDiet] = useState(false);
+
+
+const handleGenerateDiet = async () => {
+  try {
+    setLoadingDiet(true);
+
+    const res = await generateDiet();
+
+    console.log("TYPE:", typeof res?.diet_plan);
+    console.log("RAW DATA:", res?.diet_plan);
+    console.log("FULL API RESPONSE:", res);
+
+    if (!res) {
+      throw new Error("No response from backend");
+    }
+
+    if (res.success) {
+      try {
+        let text = res.diet_plan;
+
+        // ✅ If already object → directly use
+        if (typeof text === "object") {
+          setAiDiet(text);
+          return;
+        }
+
+        // 🔥 FORCE CLEAN EVERYTHING
+        text = text
+          ?.replace(/```json/gi, "")
+          ?.replace(/```/g, "")
+          ?.trim();
+
+        console.log("CLEANED TEXT:", text);
+
+        // 🔥 PARSE CLEAN JSON
+        const parsed = JSON.parse(text);
+
+        setAiDiet(parsed);
+
+      } catch (e) {
+        console.error("FINAL PARSE FAILED:", e);
+
+        // fallback (still show something)
+        setAiDiet({
+          raw: res.diet_plan,
+        });
+      }
+
+    } else {
+      console.error("Backend error:", res.error);
+    }
+
+  } catch (err) {
+    console.error("Diet error:", err);
+  } finally {
+    setLoadingDiet(false);
+  }
+};
 
   const todayMeals = useMemo(() => ({
     breakfast: mealPlan.breakfast[dayIndex % mealPlan.breakfast.length],
@@ -81,29 +143,55 @@ const DietPlanPage = () => {
 
       {/* Today's Meals */}
       {tab === 0 && (
-        <div className="space-y-3">
-          {Object.entries(todayMeals).map(([time, meal]) => (
-            <GlassCard key={time} tilt className="flex items-center gap-3">
-              <div className="flex-1">
-                <span className="text-[10px] font-body text-primary capitalize font-semibold">{time.replace(/([A-Z])/g, ' $1')}</span>
-                <h4 className="font-body text-sm font-semibold text-foreground">{meal.name}</h4>
-                <div className="flex gap-3 mt-1">
-                  <span className="text-[10px] font-body text-muted-foreground">{meal.calories} cal</span>
-                  <span className="text-[10px] font-body text-muted-foreground">{meal.protein}g protein</span>
-                </div>
-                {'tip' in meal && (meal as any).tip && (
-                  <p className="text-[10px] font-body text-accent mt-1">💡 {(meal as any).tip}</p>
-                )}
-              </div>
-            </GlassCard>
-          ))}
-          <GlassCard className="text-center">
-            <span className="text-xs font-body text-muted-foreground">Total Today</span>
-            <p className="text-xl font-display font-bold text-foreground">{totalCal} cal</p>
-            <p className="text-xs text-muted-foreground font-body">Target: {pcosAdjusted} cal</p>
+  <div className="space-y-3">
+
+    <Button onClick={handleGenerateDiet} className="w-full">
+      {loadingDiet ? "Generating AI Diet..." : "Generate AI Diet Plan"}
+    </Button>
+
+    {/* AI DIET DISPLAY */}
+    {aiDiet && (
+  <div className="space-y-3 mt-4">
+
+    {/* If structured JSON */}
+    {aiDiet.days && aiDiet.days.map((day:any, i:number) => (
+      <GlassCard key={i}>
+        <h3 className="font-semibold mb-2">{day.day}</h3>
+
+        {Object.entries(day.meals).map(([meal, value]) => (
+          <div key={meal} className="mb-2">
+            <span className="text-xs text-primary capitalize">{meal}</span>
+            <p className="text-sm">{value as string}</p>
+          </div>
+        ))}
+      </GlassCard>
+    ))}
+
+    {/* If plain text */}
+    {aiDiet.raw && (
+      <GlassCard>
+        <pre className="text-sm whitespace-pre-wrap">
+          {aiDiet.raw}
+        </pre>
+      </GlassCard>
+    )}
+
+  </div>
+)}
+
+    {/* fallback old meals
+    {!aiDiet && (
+      <>
+        {Object.entries(todayMeals).map(([time, meal]) => (
+          <GlassCard key={time}>
+            <h4>{meal.name}</h4>
           </GlassCard>
-        </div>
-      )}
+        ))}
+      </>
+    )} */}
+
+  </div>
+)}
 
       {/* Calculator */}
       {tab === 1 && (

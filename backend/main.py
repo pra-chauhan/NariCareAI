@@ -5,8 +5,40 @@ import joblib
 from fastapi.middleware.cors import CORSMiddleware
 import shap
 import numpy as np
+from sqlalchemy import Column, Integer, Float, String, JSON
+from database import Base, engine, SessionLocal
+from diet_engine import generate_diet_plan, generate_ai_diet
+from dotenv import load_dotenv
+from datetime import datetime
+import json
+import re
+load_dotenv()
 
+
+
+
+
+class PCOSRecord(Base):
+    __tablename__ = "pcos_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    age = Column(Integer)
+    bmi = Column(Float)
+    cycle = Column(Integer)
+
+    prediction = Column(Integer)
+    probability = Column(Float)
+
+    lifestyle_score = Column(Integer)
+    stress_score = Column(Integer)
+
+    top_factors = Column(JSON)  
+
+    created_at = Column(String)
 app = FastAPI()
+
+PCOSRecord.metadata.create_all(bind=engine)
 
 # =========================
 # LOAD MODELS
@@ -45,6 +77,25 @@ app.add_middleware(
 class PatientData(BaseModel):
     data: dict
 
+# =========================
+# 🔥 JSON CLEANER (NEW FIX)
+# =========================
+def extract_json(text):
+    try:
+        # remove markdown ```json or ```
+        text = re.sub(r"```(json)?", "", text).strip()
+
+        # extract JSON object safely
+        match = re.search(r"\{.*\}", text, re.DOTALL)
+
+        if match:
+            return json.loads(match.group())
+
+        return json.loads(text)
+
+    except Exception as e:
+        print("❌ FINAL JSON EXTRACTION FAILED:", e)
+        return None
 
 # =========================
 # 🔥 HYBRID EXPLANATION (SHAP + FALLBACK)
@@ -179,6 +230,27 @@ def predict_basic(patient: PatientData):
         lifestyle = calculate_lifestyle_score(patient.data)
         stress = calculate_stress_score(patient.data)
 
+        db = SessionLocal()
+
+        record = PCOSRecord(
+            age=patient.data.get("Age (yrs)", 0),
+            bmi=patient.data.get("BMI", 0),
+            cycle=patient.data.get("Cycle(R/I)", 0),
+
+            prediction=prediction,
+            probability=float(prob),
+
+            lifestyle_score=lifestyle,
+            stress_score=stress,
+
+            top_factors=top_factors,
+            created_at=str(datetime.now())
+        )
+
+        db.add(record)
+        db.commit()
+        db.close()
+
         return {
             "mode": "basic",
             "prediction": prediction,
@@ -214,6 +286,27 @@ def predict_advanced(patient: PatientData):
         lifestyle = calculate_lifestyle_score(patient.data)
         stress = calculate_stress_score(patient.data)
 
+        db = SessionLocal()
+
+        record = PCOSRecord(
+            age=patient.data.get("Age (yrs)", 0),
+            bmi=patient.data.get("BMI", 0),
+            cycle=patient.data.get("Cycle(R/I)", 0),
+
+            prediction=int(prediction),
+            probability=float(prob),
+
+            lifestyle_score=lifestyle,
+            stress_score=stress,
+
+            top_factors=top_factors,
+            created_at=str(datetime.now())
+        )
+
+        db.add(record)
+        db.commit()
+        db.close()
+
         return {
             "mode": "advanced",
             "prediction": int(prediction),
@@ -222,7 +315,56 @@ def predict_advanced(patient: PatientData):
             "lifestyle_score": lifestyle,
             "stress_score": stress
         }
-
+    
     except Exception as e:
         print("ADVANCED ERROR:", e)
         return {"error": str(e)}
+
+
+# =========================
+# 🔥 DIET GENERATION (FIXED)
+# =========================
+@app.post("/generate-diet")
+def generate_diet():
+
+    db = SessionLocal()
+    user = db.query(PCOSRecord).order_by(PCOSRecord.id.desc()).first()
+    db.close()
+
+    if not user:
+        return {
+            "success": False,
+            "error": "No user data found. Please run prediction first."
+        }
+
+    print("🔥 Generating diet for user:", user.id)
+
+        # 1️⃣ Nutrition logic
+    nutrition = generate_diet_plan(user)
+
+        # 2️⃣ AI Diet
+    diet_plan = generate_ai_diet(user, nutrition)
+
+    print("✅ RAW AI DIET:", diet_plan)
+
+        # =========================
+        # 🔥 ENSURE SAFE FORMAT
+        # =========================
+
+        # Case 1: Already dict (BEST CASE)
+    if isinstance(diet_plan, dict):
+            final_diet = diet_plan
+
+        # Case 2: JSON string → parse
+    elif isinstance(diet_plan, str):
+        parsed = extract_json(diet_plan)
+        final_diet = parsed if parsed else {"raw": diet_plan}
+
+    else:
+        final_diet = {"raw": str(diet_plan)}
+
+    return {
+        "success": True,
+        "nutrition": nutrition,
+        "diet_plan": final_diet
+    }
