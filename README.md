@@ -41,6 +41,12 @@ The platform analyzes health indicators and symptoms using **machine learning mo
 - 📊 **Explainable AI Insights**  
   SHAP analysis explains the factors contributing to prediction results.
 
+- **Diet Generation**
+  Based on the health output of the user. LLM based diet generation by considering pcos friendly foods.
+
+- 🩺**Doctor Consultation** - telecommunication.
+  User can show the report to doctor so far they have done on the app and doctor can read that.
+
 - 🩺 **Health Dashboard**  
   Displays risk scores, contributing health factors, and health indicators.
 
@@ -167,14 +173,15 @@ Women’s health advocates
 
 Together we can build better, accessible digital health tools for women worldwide.
 
-### 🛣 Roadmap
+### 🛣 Future Integrations.
 Future improvements planned:
-📱 Mobile application (Android & iOS)
+🩺 After teleconsultaion with doctor - based on the meeting we  can provide a user-friendly languae summary. 
 ⌚ Wearable device integration
 🤖 AI health assistant chatbot
 📊 Advanced health analytics dashboard
 🧬 Improved PCOS detection models
 🌐 Multi-language support for global accessibility
+📱 Mobile application (Android & iOS)
 
 ### ⚠️ Disclaimer
 NariCareAI is intended for educational and preliminary screening purposes only.
