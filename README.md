@@ -1,3 +1,6 @@
+Current working prototype video link - https://drive.google.com/file/d/1mrKkBeaq9cZV366pLbz6snwF7Gzo3lGY/view?usp=sharing
+
+
 # 🌸 NariCareAI – AI Powered Early PCOS Risk Screening Platform
 
 NariCareAI is an **AI-driven early PCOS risk screening platform** designed to help women detect potential Polycystic Ovary Syndrome (PCOS) risks and take preventive action through lifestyle guidance.
