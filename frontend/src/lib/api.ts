@@ -27,7 +27,7 @@ export const generateDiet = async () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({}), // or profile if needed
+      body: JSON.stringify({}), 
     });
 
     const data = await res.json();

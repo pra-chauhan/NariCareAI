@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { Salad, AlertCircle, Sparkles, ShoppingCart, Stethoscope } from 'lucide-react';
 import { generateDiet } from '@/lib/api';
 
-const TABS = ['Generate AI Diet', 'Calculator', 'Avoid & Super', 'Grocery', 'Deficiency'];
+const TABS = ['Generate AI Diet', 'Calculator', 'Avoid & Super'];
 
 const DietPlanPage = () => {
   const profile = getProfile()!;
@@ -46,13 +46,13 @@ const handleGenerateDiet = async () => {
       try {
         let text = res.diet_plan;
 
-        // ✅ If already object → directly use
+       
         if (typeof text === "object") {
           setAiDiet(text);
           return;
         }
 
-        // 🔥 FORCE CLEAN EVERYTHING
+       
         text = text
           ?.replace(/```json/gi, "")
           ?.replace(/```/g, "")
@@ -60,7 +60,7 @@ const handleGenerateDiet = async () => {
 
         console.log("CLEANED TEXT:", text);
 
-        // 🔥 PARSE CLEAN JSON
+        
         const parsed = JSON.parse(text);
 
         setAiDiet(parsed);
@@ -68,7 +68,7 @@ const handleGenerateDiet = async () => {
       } catch (e) {
         console.error("FINAL PARSE FAILED:", e);
 
-        // fallback (still show something)
+        
         setAiDiet({
           raw: res.diet_plan,
         });
@@ -109,7 +109,7 @@ const handleGenerateDiet = async () => {
     Object.values(todayMeals).forEach(meal => {
       meal.name.split(/[+&,]/).forEach(part => items.add(part.trim()));
     });
-    // Add some staples
+    
     ['Brown Rice', 'Dal', 'Curd', 'Ghee', 'Turmeric', 'Fresh Vegetables', 'Fruits', 'Flaxseeds', 'Walnuts'].forEach(i => items.add(i));
     return Array.from(items);
   }, [todayMeals]);
@@ -179,16 +179,6 @@ const handleGenerateDiet = async () => {
   </div>
 )}
 
-    {/* fallback old meals
-    {!aiDiet && (
-      <>
-        {Object.entries(todayMeals).map(([time, meal]) => (
-          <GlassCard key={time}>
-            <h4>{meal.name}</h4>
-          </GlassCard>
-        ))}
-      </>
-    )} */}
 
   </div>
 )}
@@ -252,28 +242,7 @@ const handleGenerateDiet = async () => {
         </div>
       )}
 
-      {/* Grocery */}
-      {tab === 3 && (
-        <GlassCard>
-          <h3 className="font-display text-lg text-foreground flex items-center gap-2 mb-3">
-            <ShoppingCart size={18} className="text-primary" /> Grocery List
-          </h3>
-          <p className="text-xs font-body text-muted-foreground mb-3">Based on today's meal plan</p>
-          {groceryItems.map(item => (
-            <label key={item} className="flex items-center gap-3 py-2 border-b border-border/20 last:border-0 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={checkedItems.has(item)}
-                onChange={() => toggleCheck(item)}
-                className="w-4 h-4 rounded accent-primary"
-              />
-              <span className={cn('text-sm font-body transition-all', checkedItems.has(item) ? 'line-through text-muted-foreground' : 'text-foreground')}>
-                {item}
-              </span>
-            </label>
-          ))}
-        </GlassCard>
-      )}
+     
 
       {/* Deficiency */}
       {tab === 4 && (

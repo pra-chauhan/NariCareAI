@@ -11,7 +11,7 @@ client = Groq(
 
 
 # =========================
-# 🔥 LOGIC ENGINE (SMART)
+# LOGIC ENGINE 
 # =========================
 def generate_diet_plan(user):
 
@@ -40,7 +40,7 @@ def generate_diet_plan(user):
 
 
 # =========================
-# 🤖 LLM DIET GENERATOR
+#  LLM DIET GENERATOR
 # =========================
 def generate_ai_diet(user, nutrition):
 
@@ -60,7 +60,8 @@ def generate_ai_diet(user, nutrition):
     - Balance hormones (PCOS specific)
     - Include seeds (flax, chia), vegetables, healthy fats
     - Avoid dairy overload if PCOS high
-
+    - Don't included any non-vegetarian food, only vegetarian food
+    
     PERSONALIZATION:
     - If PCOS risk high → anti-inflammatory foods
     - If weight gain → calorie deficit meals

@@ -16,7 +16,7 @@ const ExercisePage = () => {
   const phaseExercises = EXERCISES.filter(e => e.phases.includes(phase));
   const restrictedExercises = EXERCISES.filter(e => !e.phases.includes(phase));
 
-  // Calculate streak
+  
   const logs = getLogs();
   let streak = 0;
   const today = new Date();

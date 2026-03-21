@@ -76,7 +76,6 @@ export function calculateTDEE(bmr: number, activity: string): number {
   return Math.round(bmr * (factors[activity] || 1.2));
 }
 
-// PCOS Detection scoring (simplified version of trained model logic)
 export function detectPCOS(params: {
   bmi: number;
   lhFshRatio: number;
@@ -123,7 +122,6 @@ export function detectPCOS(params: {
   return { probability, risk, recommendations };
 }
 
-// Store helpers
 const PROFILE_KEY = 'aura_profile';
 const LOGS_KEY = 'aura_logs';
 

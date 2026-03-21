@@ -78,7 +78,7 @@ class PatientData(BaseModel):
     data: dict
 
 # =========================
-# 🔥 JSON CLEANER (NEW FIX)
+# JSON CLEANER (NEW FIX)
 # =========================
 def extract_json(text):
     try:
@@ -98,12 +98,12 @@ def extract_json(text):
         return None
 
 # =========================
-# 🔥 HYBRID EXPLANATION (SHAP + FALLBACK)
+#  HYBRID EXPLANATION (SHAP + FALLBACK)
 # =========================
 def get_explanation(explainer, input_df, feature_names):
 
     # =========================
-    # 1️⃣ TRY SHAP
+    # TRY SHAP
     # =========================
     if explainer is not None:
         try:
@@ -124,9 +124,7 @@ def get_explanation(explainer, input_df, feature_names):
         except Exception as e:
             print("SHAP FAILED → using fallback:", e)
 
-    # =========================
-    # 2️⃣ FALLBACK LOGIC (ALWAYS WORKS)
-    # =========================
+    
     data = input_df.iloc[0].to_dict()
     fallback = []
 
@@ -154,9 +152,7 @@ def get_explanation(explainer, input_df, feature_names):
     return fallback[:5]
 
 
-# =========================
-# HELPER: CLEAN INPUT
-# =========================
+
 def prepare_input(patient_data, feature_list):
 
     input_df = pd.DataFrame([patient_data])
@@ -172,7 +168,7 @@ def prepare_input(patient_data, feature_list):
 
 
 # =========================
-# 🔥 NEW: LIFESTYLE SCORE
+#LIFESTYLE SCORE
 # =========================
 def calculate_lifestyle_score(data):
 
@@ -191,7 +187,7 @@ def calculate_lifestyle_score(data):
 
 
 # =========================
-# 🔥 NEW: STRESS SCORE
+# STRESS SCORE
 # =========================
 def calculate_stress_score(data):
 
@@ -322,7 +318,7 @@ def predict_advanced(patient: PatientData):
 
 
 # =========================
-# 🔥 DIET GENERATION (FIXED)
+#DIET GENERATION
 # =========================
 @app.post("/generate-diet")
 def generate_diet():
@@ -339,23 +335,17 @@ def generate_diet():
 
     print("🔥 Generating diet for user:", user.id)
 
-        # 1️⃣ Nutrition logic
     nutrition = generate_diet_plan(user)
 
-        # 2️⃣ AI Diet
     diet_plan = generate_ai_diet(user, nutrition)
 
     print("✅ RAW AI DIET:", diet_plan)
 
-        # =========================
-        # 🔥 ENSURE SAFE FORMAT
-        # =========================
-
-        # Case 1: Already dict (BEST CASE)
+       
     if isinstance(diet_plan, dict):
             final_diet = diet_plan
 
-        # Case 2: JSON string → parse
+       
     elif isinstance(diet_plan, str):
         parsed = extract_json(diet_plan)
         final_diet = parsed if parsed else {"raw": diet_plan}

@@ -117,80 +117,8 @@ const DailyCarePage = () => {
         </div>
       </GlassCard>
 
-      {/* Daily Logging */}
-      <GlassCard>
-        <h3 className="font-display text-lg text-foreground mb-3">Today's Check-in</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs font-body text-muted-foreground mb-1 block">Weight (kg)</label>
-            <input
-              type="number"
-              step="0.1"
-              className="soft-input w-full px-3 py-2.5 text-sm font-body text-foreground"
-              value={log.weight || ''}
-              onChange={e => setLog(p => ({ ...p, weight: parseFloat(e.target.value) || 0 }))}
-              placeholder={`Last: ${profile.weight} kg`}
-            />
-          </div>
-          <div>
-            <label className="text-xs font-body text-muted-foreground mb-2 block">Energy Level</label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map(level => (
-                <button
-                  key={level}
-                  onClick={() => setLog(p => ({ ...p, energy: level }))}
-                  className={cn(
-                    'flex-1 py-2 rounded-lg text-sm font-body font-semibold transition-all',
-                    log.energy === level
-                      ? 'bg-primary text-primary-foreground'
-                      : 'glass-card text-foreground',
-                  )}
-                >
-                  {['😴', '😐', '🙂', '😊', '🤩'][level - 1]}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </GlassCard>
-
-      {/* Progress Monitoring */}
-      <GlassCard>
-        <h3 className="font-display text-lg text-foreground flex items-center gap-2 mb-3">
-          <TrendingUp size={18} className="text-primary" /> Weekly Progress
-        </h3>
-        <div className="space-y-3">
-          <div>
-            <span className="text-xs font-body text-muted-foreground">Energy Trend</span>
-            <div className="flex gap-1.5 mt-1">
-              {weekData.map((d, i) => (
-                <div key={i} className="flex-1 text-center">
-                  <div className="h-12 rounded-lg bg-muted flex items-end justify-center">
-                    <div
-                      className="w-full bg-accent rounded-lg transition-all"
-                      style={{ height: `${(d.energy / 5) * 100}%` }}
-                    />
-                  </div>
-                  <span className="text-[10px] font-body text-muted-foreground">{d.day}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <ProgressBar3D
-            value={log.water}
-            max={8}
-            color="bg-sage"
-            label="Water Intake"
-          />
-          <ProgressBar3D
-            value={log.exerciseMinutes}
-            max={45}
-            color="bg-primary"
-            label="Exercise"
-          />
-        </div>
-      </GlassCard>
-    </div>
+      
+    </div> 
   );
 };
 

@@ -1,16 +1,83 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import GlassCard from '@/components/ui/GlassCard';
-import { getProfile, getDayOfCycle, getCyclePhase, PHASE_COLORS, PHASE_LABELS, CyclePhase, getTodayLog, saveTodayLog } from '@/lib/store';
+import {
+  getProfile,
+  getDayOfCycle,
+  getCyclePhase,
+  PHASE_COLORS,
+  PHASE_LABELS,
+  CyclePhase,
+  getTodayLog,
+  saveTodayLog
+} from '@/lib/store';
 import { cn } from '@/lib/utils';
 
-const SYMPTOMS = ['Cramps', 'Bloating', 'Headache', 'Fatigue', 'Mood Swings', 'Acne', 'Back Pain', 'Breast Tenderness', 'Insomnia', 'Cravings', 'Nausea', 'Hot Flashes'];
+const SYMPTOMS = [
+  'Cramps', 'Bloating', 'Headache', 'Fatigue', 'Mood Swings',
+  'Acne', 'Back Pain', 'Breast Tenderness', 'Insomnia',
+  'Cravings', 'Nausea', 'Hot Flashes'
+];
+
+type PhaseDetails = {
+  title: string;
+  icon: string;
+  description: string;
+  bodyChanges: string;
+  mood: string;
+  tips: string;
+};
+
+const phaseInfo: Record<CyclePhase, PhaseDetails> = {
+  period: {
+    title: "Menstrual Phase",
+    icon: "🩸",
+    description: "Your body sheds the uterine lining, causing your period.",
+    bodyChanges: "Hormones are at their lowest → low energy, fatigue.",
+    mood: "Low energy, reflective, need rest",
+    tips: "Rest, hydrate, iron-rich foods."
+  },
+  follicular: {
+    title: "Follicular Phase",
+    icon: "🌱",
+    description: "Estrogen rises and body prepares an egg.",
+    bodyChanges: "Energy increases, sharper thinking.",
+    mood: "Motivated, fresh",
+    tips: "Start new tasks, workouts."
+  },
+  ovulation: {
+    title: "Ovulation Phase",
+    icon: "🔥",
+    description: "Egg is released. Fertile window.",
+    bodyChanges: "Peak energy & confidence.",
+    mood: "Confident, social",
+    tips: "Best time for important work."
+  },
+  luteal: {
+    title: "Luteal Phase",
+    icon: "🌙",
+    description: "Body prepares for pregnancy.",
+    bodyChanges: "Energy drops slowly.",
+    mood: "Calm",
+    tips: "Slow down, self-care."
+  },
+  pms: {
+    title: "PMS Phase",
+    icon: "⚡",
+    description: "Hormones drop before period.",
+    bodyChanges: "Mood swings, fatigue.",
+    mood: "Sensitive",
+    tips: "Rest, avoid stress."
+  }
+};
 
 const CycleTrackerPage = () => {
   const profile = getProfile()!;
   const today = new Date();
-  const dayOfCycle = getDayOfCycle(profile.lastPeriodDate);
-  const currentPhase = getCyclePhase(dayOfCycle, profile.cycleLength);
+
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(today);
+
   const [log, setLog] = useState(getTodayLog());
 
   const toggleSymptom = (s: string) => {
@@ -24,109 +91,156 @@ const CycleTrackerPage = () => {
     saveTodayLog(newLog);
   };
 
-  // Generate 28-day calendar
-  const calendarDays = Array.from({ length: profile.cycleLength }, (_, i) => {
-    const day = i + 1;
-    const phase = getCyclePhase(day, profile.cycleLength);
-    return { day, phase, isToday: day === dayOfCycle };
+  //  Get cycle day for ANY date
+  const getCycleDayFromDate = (date: Date) => {
+    const start = new Date(profile.lastPeriodDate);
+    const diff = Math.floor((date.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    return ((diff % profile.cycleLength) + profile.cycleLength) % profile.cycleLength + 1;
+  };
+
+  //  Generate real calendar
+  const getMonthDays = () => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+
+    const days: (Date | null)[] = [];
+
+    for (let i = 0; i < firstDay; i++) days.push(null);
+    for (let d = 1; d <= totalDays; d++) {
+      days.push(new Date(year, month, d));
+    }
+
+    return days;
+  };
+
+  const calendarDays = getMonthDays().map(date => {
+    if (!date) return null;
+
+    const cycleDay = getCycleDayFromDate(date);
+    const phase = getCyclePhase(cycleDay, profile.cycleLength);
+
+    const isToday = date.toDateString() === today.toDateString();
+
+    // Fertile window logic
+    const ovulationDay = Math.round(profile.cycleLength / 2);
+    const isFertile =
+      cycleDay >= ovulationDay - 2 && cycleDay <= ovulationDay + 2;
+
+    return { date, phase, isToday, isFertile, cycleDay };
   });
 
-  const phaseInfo: Record<CyclePhase, string> = {
-    period: 'Rest, hydrate, iron-rich foods. Light yoga recommended.',
-    follicular: 'Energy rises! Great time for strength training and new activities.',
-    ovulation: 'Peak energy and confidence. Best time for intense workouts.',
-    luteal: 'Slow down, eat warming foods, focus on stress management.',
-    pms: 'Be gentle with yourself. Magnesium-rich foods and rest help.',
+  const selectedCycleDay = selectedDate ? getCycleDayFromDate(selectedDate) : null;
+  const selectedPhase = selectedCycleDay
+    ? getCyclePhase(selectedCycleDay, profile.cycleLength)
+    : null;
+
+  const phase = selectedPhase ? phaseInfo[selectedPhase] : null;
+
+  // AI Insight
+  const getAIInsight = () => {
+    if (log.symptoms.includes('Fatigue'))
+      return "Your body is signaling rest. Slow down today.";
+
+    if (selectedPhase === 'ovulation')
+      return "High energy day — use it for important work.";
+
+    if (selectedPhase === 'pms')
+      return "Take care, emotions may feel stronger today.";
+
+    return "Stay in sync with your body 🌸";
   };
 
   return (
     <div className="space-y-5">
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="text-2xl font-display text-foreground">Cycle Tracker 🌙</h1>
-        <p className="text-sm font-body text-muted-foreground">Day {dayOfCycle} of {profile.cycleLength}</p>
-      </motion.div>
 
-      {/* Phase Legend */}
-      <div className="flex flex-wrap gap-2">
-        {(Object.keys(PHASE_LABELS) as CyclePhase[]).map(phase => (
-          <span key={phase} className={cn('pill-badge text-[10px]', PHASE_COLORS[phase], phase === 'period' || phase === 'ovulation' ? 'text-primary-foreground' : 'text-foreground')}>
-            {PHASE_LABELS[phase]}
-          </span>
-        ))}
+      {/* Header */}
+      <h1 className="text-2xl font-display">Cycle Tracker 🌙</h1>
+
+      {/* Month Navigation */}
+      <div className="flex justify-between items-center">
+        <button onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}>
+          ←
+        </button>
+        <p className="font-semibold">
+          {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+        </p>
+        <button onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}>
+          →
+        </button>
       </div>
 
-      {/* Calendar Grid */}
+      {/* Calendar */}
       <GlassCard>
         <div className="grid grid-cols-7 gap-1.5">
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-            <div key={i} className="text-center text-[10px] font-body text-muted-foreground font-semibold pb-1">{d}</div>
+          {['S','M','T','W','T','F','S'].map(d => (
+            <div key={d} className="text-center text-xs">{d}</div>
           ))}
-          {calendarDays.map(({ day, phase, isToday }) => (
-            <motion.div
-              key={day}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: day * 0.02 }}
-              className={cn(
-                'aspect-square rounded-lg flex items-center justify-center text-xs font-body font-semibold transition-all',
-                PHASE_COLORS[phase],
-                phase === 'period' || phase === 'ovulation' ? 'text-primary-foreground' : 'text-foreground',
-                isToday && 'ring-2 ring-foreground ring-offset-1 scale-110',
+
+          {calendarDays.map((item, i) => (
+            <div key={i}>
+              {!item ? (
+                <div />
+              ) : (
+                <motion.div
+                  onClick={() => setSelectedDate(item.date)}
+                  className={cn(
+                    'aspect-square flex items-center justify-center rounded-lg text-xs cursor-pointer',
+                    PHASE_COLORS[item.phase],
+                    item.isToday && 'ring-2 scale-110',
+                    item.isFertile && 'border-2 border-yellow-400'
+                  )}
+                >
+                  {item.date.getDate()}
+                </motion.div>
               )}
-            >
-              {day}
-            </motion.div>
+            </div>
           ))}
         </div>
       </GlassCard>
 
-      {/* Current Phase Info */}
-      <GlassCard tilt className="border-l-4 border-primary">
-        <h3 className="font-display text-lg text-foreground capitalize">{PHASE_LABELS[currentPhase]} Phase</h3>
-        <p className="text-sm font-body text-muted-foreground mt-1">{phaseInfo[currentPhase]}</p>
-      </GlassCard>
+      {/* Selected Day Info */}
+      {phase && (
+        <GlassCard>
+          <h3 className="text-lg">
+            {phase.icon} {phase.title}
+          </h3>
+          <p>{phase.description}</p>
+          <p className="text-sm">{phase.bodyChanges}</p>
+          <p className="text-sm">{phase.mood}</p>
+          <p className="text-sm">{phase.tips}</p>
+        </GlassCard>
+      )}
 
-      {/* Symptom Logging */}
-      <GlassCard>
-        <h3 className="font-display text-lg text-foreground mb-3">Log Symptoms</h3>
+      {/* AI Insight */}
+      {/* <GlassCard>
+        <h3>🤖 AI Insight</h3>
+        <p>{getAIInsight()}</p>
+      </GlassCard> */}
+
+      {/* Symptoms */}
+      {/* <GlassCard>
+        <h3>Log Symptoms</h3>
         <div className="flex flex-wrap gap-2">
           {SYMPTOMS.map(s => (
             <button
               key={s}
               onClick={() => toggleSymptom(s)}
               className={cn(
-                'pill-badge text-xs transition-all',
+                'pill-badge',
                 log.symptoms.includes(s)
-                  ? 'bg-primary text-primary-foreground'
-                  : 'glass-card text-foreground hover:bg-primary/10',
+                  ? 'bg-primary text-white'
+                  : 'glass-card'
               )}
             >
               {s}
             </button>
           ))}
         </div>
-      </GlassCard>
+      </GlassCard> */}
 
-      {/* Cycle Analytics */}
-      <GlassCard>
-        <h3 className="font-display text-lg text-foreground mb-3">Cycle Analytics</h3>
-        <div className="grid grid-cols-3 gap-3 text-center">
-          <div>
-            <p className="text-lg font-display font-bold text-foreground">{profile.cycleLength}</p>
-            <p className="text-[10px] font-body text-muted-foreground">Cycle Length</p>
-          </div>
-          <div>
-            <p className="text-lg font-display font-bold text-foreground">{profile.periodDuration}</p>
-            <p className="text-[10px] font-body text-muted-foreground">Period Days</p>
-          </div>
-          <div>
-            <p className="text-lg font-display font-bold text-primary">
-              {Math.round(profile.cycleLength / 2)}
-            </p>
-            <p className="text-[10px] font-body text-muted-foreground">Ovulation Day</p>
-          </div>
-        </div>
-      </GlassCard>
     </div>
   );
 };

@@ -237,10 +237,7 @@ const PCOSDetectionPage = () => {
 
       setResult(resultData);
 
-      // navigate("/health-dashboard", {
-      //   state: { risk, probability, form }
-      // });
-
+     
     } catch (err) {
 
       console.error("Prediction error", err);
@@ -474,7 +471,7 @@ const PCOSDetectionPage = () => {
 
   <GlassCard className="space-y-4">
 
-    {/* 🔥 RISK */}
+    {/*  RISK */}
     <div className="flex items-center gap-3">
       {result.risk === "low" ? <CheckCircle2/> : <AlertTriangle/>}
       <h3 className="text-xl">{result.risk.toUpperCase()} RISK</h3>
@@ -486,7 +483,7 @@ const PCOSDetectionPage = () => {
       label={`${result.probability}% probability`}
     />
 
-    {/* 🔥 SCORES */}
+    {/*  SCORES */}
     <div className="grid grid-cols-2 gap-4">
       <div className="p-3 bg-cream rounded text-sm">
         <p className="font-semibold">Lifestyle Score</p>
@@ -498,7 +495,7 @@ const PCOSDetectionPage = () => {
         <p>{result.stressScore ?? 0}/100</p>
       </div>
     </div>
-    {/* 🔥 AI INSIGHT */}
+    {/* AI INSIGHT */}
 
 {result.factors.length > 0 && (
   <div className="p-3 rounded bg-blue-50 text-sm">
@@ -516,13 +513,13 @@ const PCOSDetectionPage = () => {
   </div>
 )}
 
-    {/* 🔥 SHAP SECTION */}
+    {/*  SHAP SECTION */}
     <div className="mt-4">
       <h4 className="font-semibold flex items-center gap-2">
         <Info size={16}/> Why this result?
       </h4>
 
-      {/* 🔥 XAI GRAPH SECTION */}
+      {/* XAI GRAPH SECTION */}
 
 {result.factors.length > 0 && (
   <div className="space-y-4 mt-4">
@@ -567,7 +564,7 @@ const PCOSDetectionPage = () => {
 )}
     </div>
 
-    {/* 🔥 RECOMMENDATIONS */}
+    {/* RECOMMENDATIONS */}
     <div className="mt-4">
       <h4 className="font-semibold mb-2">Suggestions</h4>
       <ul className="list-disc ml-5 text-sm space-y-1">
